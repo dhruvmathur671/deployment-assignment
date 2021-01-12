@@ -1,0 +1,4 @@
+FROM mysql:8
+
+# Setup the custom configuration
+ADD mysqlid.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
