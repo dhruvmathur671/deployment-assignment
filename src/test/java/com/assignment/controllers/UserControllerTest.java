@@ -1,5 +1,6 @@
 package com.assignment.controllers;
 
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
@@ -46,6 +47,7 @@ public class UserControllerTest {
 		RequestBuilder requestBuilder = MockMvcRequestBuilders.get("/fun");
 
 		mockMvc.perform(requestBuilder).andExpect(MockMvcResultMatchers.status().is2xxSuccessful());
+		assertNull("null");
 	}
 	
 	@Test
