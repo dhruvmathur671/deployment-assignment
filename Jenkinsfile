@@ -24,17 +24,39 @@ pipeline {
 
         stage('SonarQube analysis') {
             steps {
+                sh 'mv target/assignment-0.0.1-SNAPSHOT.jar my-app.jar'
                 script {
                     // requires SonarQube Scanner 2.8+
                     scannerHome = tool 'SonarQube Scanner 2.8'
                 }
                 withSonarQubeEnv('SonarQube Scanner') {
-                    sh "${scannerHome}/bin/sonar-scanner"
+                    sh "mvn clean package sonar:sonar"
+                    sleep 60 
                 }
-                timeout(time: 10, unit: 'MINUTES') {
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
+        stage('SSH transfer') {
+          steps {
+            sshPublisher(
+                continueOnError: false, failOnError: true,
+                publishers: [
+                    sshPublisherDesc(
+                        configName: "dev1",
+                        verbose: true,
+                        transfers: [
+                            sshTransfer(sourceFiles: "my-app.jar")
+                        ],
+
+                    )
+                ]
+            )
+        
+            }
+            
+        } 
     }
+
 }
