@@ -7,13 +7,12 @@ pipeline {
     }
 
     stages {
-        stage('Build') {
+        stage('checkout') {
             steps {
                 // Get some code from a GitHub repository
-                git 'https://github.com/dhruvmathur671/deployment-assignment.git'
+                git branch:'master',url:'https://github.com/dhruvmathur671/deployment-assignment.git'
 
                 // Run Maven on a Unix agent.
-                sh "mvn clean install"
 
                 // To run Maven on a Windows agent, use
                 // bat "mvn -Dmaven.test.failure.ignore=true clean package"
@@ -23,23 +22,29 @@ pipeline {
         }
 
         stage('SonarQube analysis') {
-            steps {
-                sh 'mv target/assignment-0.0.1-SNAPSHOT.jar my-app.jar'
-                script {
+            steps
+                    {
+               script {
                     // requires SonarQube Scanner 2.8+
                     scannerHome = tool 'SonarQube Scanner 2.8'
                 }
                 withSonarQubeEnv('SonarQube Scanner') {
                     sh "mvn clean package sonar:sonar"
-                    sleep 60 
+                   sleep 60 
                 }
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
+        
+        stage("build") {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
         stage('SSH transfer') {
-          steps {
+          steps([$class: 'BapSshPromotionPublisherPlugin']) {
             sshPublisher(
                 continueOnError: false, failOnError: true,
                 publishers: [
@@ -47,7 +52,9 @@ pipeline {
                         configName: "dev1",
                         verbose: true,
                         transfers: [
-                            sshTransfer(sourceFiles: "my-app.jar")
+                            sshTransfer(sourceFiles: "**/*.jar",removePrefix:"",
+                                    remoteDirectory:"",
+                                    execCommand:"java -jar **/*.jar")
                         ],
 
                     )
